@@ -1,0 +1,33 @@
+name: Blob storage website CI
+
+on:
+  push:
+    branches: 
+      - master 
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: '5.0.x'    
+
+      - name: Build 
+        run: dotnet test -o ${{ github.workspace }}/out      
+      
+      - uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          #add secret AZURE_CREDENTIALS
+
+      - name: Upload to blob storage
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            az storage blob upload-batch --account-name <account-name> --auth-mode key -d '$web' -s ${{ github.workspace }}/out
+
+            
